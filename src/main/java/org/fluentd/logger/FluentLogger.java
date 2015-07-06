@@ -41,8 +41,13 @@ public class FluentLogger {
     }
 
     public static synchronized FluentLogger getLogger(String tagPrefix, String host, int port, int timeout,
-            int bufferCapacity, Reconnector reconnector) {
-        return factory.getLogger(tagPrefix, host, port, timeout, bufferCapacity, reconnector);
+            int bufferCapacity, boolean keepAlive) {
+        return factory.getLogger(tagPrefix, host, port, timeout, bufferCapacity, keepAlive);
+    }
+
+    public static synchronized FluentLogger getLogger(String tagPrefix, String host, int port, int timeout,
+            int bufferCapacity, boolean keepAlive, Reconnector reconnector) {
+        return factory.getLogger(tagPrefix, host, port, timeout, bufferCapacity, keepAlive, reconnector);
     }
 
     /**

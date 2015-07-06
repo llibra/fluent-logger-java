@@ -44,6 +44,8 @@ public class RawSocketSender implements Sender {
 
     private int timeout;
 
+    private boolean keepAlive;
+
     private BufferedOutputStream out;
 
     private ByteBuffer pendings;
@@ -63,23 +65,29 @@ public class RawSocketSender implements Sender {
     }
 
     public RawSocketSender(String host, int port, int timeout, int bufferCapacity) {
-        this(host, port, timeout, bufferCapacity, new ExponentialDelayReconnector());
-
+        this(host, port, timeout, bufferCapacity, false);
     }
 
-    public RawSocketSender(String host, int port, int timeout, int bufferCapacity, Reconnector reconnector) {
+    public RawSocketSender(String host, int port, int timeout, int bufferCapacity, boolean keepAlive) {
+        this(host, port, timeout, bufferCapacity, keepAlive, new ExponentialDelayReconnector());
+    }
+
+	public RawSocketSender(String host, int port, int timeout,
+			int bufferCapacity, boolean keepAlive, Reconnector reconnector) {
         msgpack = new MessagePack();
         msgpack.register(Event.class, Event.EventTemplate.INSTANCE);
         pendings = ByteBuffer.allocate(bufferCapacity);
+        this.keepAlive = keepAlive;
         server = new InetSocketAddress(host, port);
         this.reconnector = reconnector;
-        name = String.format("%s_%d_%d_%d", host, port, timeout, bufferCapacity);
+        name = String.format("%s_%d_%d_%d_%b", host, port, timeout, bufferCapacity, keepAlive);
         this.timeout = timeout;
     }
 
     private void connect() throws IOException {
         try {
             socket = new Socket();
+            socket.setKeepAlive(keepAlive);
             socket.connect(server, timeout);
             out = new BufferedOutputStream(socket.getOutputStream());
         } catch (IOException e) {

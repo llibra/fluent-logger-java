@@ -41,16 +41,21 @@ public class FluentLoggerFactory {
     }
 
     public FluentLogger getLogger(String tagPrefix, String host, int port) {
-        return getLogger(tagPrefix, host, port, 3 * 1000, 1 * 1024 * 1024, new ExponentialDelayReconnector());
+        return getLogger(tagPrefix, host, port, 3 * 1000, 1 * 1024 * 1024, false);
     }
 
     public FluentLogger getLogger(String tagPrefix, String host, int port, int timeout, int bufferCapacity) {
-        return getLogger(tagPrefix, host, port, timeout, bufferCapacity, new ExponentialDelayReconnector());
+        return getLogger(tagPrefix, host, port, timeout, bufferCapacity, false);
+    }
+
+    public FluentLogger getLogger(String tagPrefix, String host, int port, int timeout, int bufferCapacity,
+            boolean keepAlive) {
+        return getLogger(tagPrefix, host, port, timeout, bufferCapacity, keepAlive, new ExponentialDelayReconnector());
     }
 
     public synchronized FluentLogger getLogger(String tagPrefix, String host, int port, int timeout, int bufferCapacity,
-            Reconnector reconnector) {
-        String key = String.format("%s_%s_%d_%d_%d", new Object[] { tagPrefix, host, port, timeout, bufferCapacity });
+            boolean keepAlive, Reconnector reconnector) {
+        String key = String.format("%s_%s_%d_%d_%d_%b", new Object[] { tagPrefix, host, port, timeout, bufferCapacity, keepAlive });
 
         for (Map.Entry<FluentLogger, String> entry : loggers.entrySet()) {
             if (entry.getValue().equals(key)) {
@@ -66,7 +71,7 @@ public class FluentLoggerFactory {
         Properties props = System.getProperties();
         if (!props.containsKey(Config.FLUENT_SENDER_CLASS)) {
             // create default sender object
-            sender = new RawSocketSender(host, port, timeout, bufferCapacity, reconnector);
+            sender = new RawSocketSender(host, port, timeout, bufferCapacity, keepAlive, reconnector);
         } else {
             String senderClassName = props.getProperty(Config.FLUENT_SENDER_CLASS);
             try {
